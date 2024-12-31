@@ -1,6 +1,11 @@
 local M = {
   conf = {},
+  zindex = 1,
 }
+
+M.addIndex = function()
+  M.zindex = M.zindex + 1
+end
 
 M.setup_lib = function(conf)
   M.conf = vim.tbl_deep_extend("force", M.conf, conf)
@@ -59,7 +64,36 @@ M.remove_win = function(win)
     -- Focus the previous preview if there is one
     if index > 1 then
       local prev_win = M.windows[index - 1]
+      M.addIndex()
       vim.api.nvim_set_current_win(prev_win)
+      vim.api.nvim_win_set_config(prev_win, {
+        zindex = M.zindex, -- 修改 zindex
+      })
+    end
+  end
+end
+
+M.is_window_valid = function(win)
+  return vim.api.nvim_win_is_valid(win)
+end
+
+M.go_next_win = function(win)
+  local index = M.tablefind(M.windows, win or vim.api.nvim_get_current_win())
+  local len = #M.windows
+  M.addIndex()
+  if index then
+    if index >= 1 and index < len then
+      local prev_win = M.windows[index + 1]
+      vim.api.nvim_set_current_win(prev_win)
+      vim.api.nvim_win_set_config(prev_win, {
+        zindex = M.zindex, -- 修改 zindex
+      })
+    elseif index == len then
+      local first_win = M.windows[1]
+      vim.api.nvim_set_current_win(first_win)
+      vim.api.nvim_win_set_config(first_win, {
+        zindex = M.zindex, -- 修改 zindex
+      })
     end
   end
 end
@@ -107,7 +141,7 @@ local function set_title(buffer)
     return nil
   end
 
-  local rel_filepath = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buffer), ":.")
+  local rel_filepath = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buffer), ":~")
   return M.conf.preview_window_title.enable and rel_filepath or nil
 end
 
@@ -173,8 +207,10 @@ end
 
 M.open_floating_win = function(target, position, opts)
   local buffer = type(target) == "string" and vim.uri_to_bufnr(target) or target
-  local bufpos = { vim.fn.line(".") - 1, vim.fn.col(".") } -- FOR relative='win'
-  local zindex = M.conf.zindex + (vim.tbl_isempty(M.windows) and 0 or #M.windows)
+  local bufpos = { vim.fn.line "." - 1, vim.fn.col "." } -- FOR relative='win'
+  -- local zindex = M.conf.zindex + (vim.tbl_isempty(M.windows) and 0 or #M.windows)
+  M.addIndex()
+  local zindex = M.zindex
 
   opts = opts or {}
 
@@ -268,29 +304,30 @@ local function open_references_previewer(prompt_title, items)
     if not opts.hide_preview then
       previewer = telescope_conf.qflist_previewer(opts)
     end
-
     if #items == 1 then
       _open_references_window(items[1])
     else
-      pickers.new(opts, {
-        prompt_title = prompt_title,
-        finder = finders.new_table {
-          results = items,
-          entry_maker = entry_maker,
-        },
-        previewer = previewer,
-        sorter = telescope_conf.generic_sorter(opts),
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            local selection = action_state.get_selected_entry()
-            actions.close(prompt_bufnr)
+      pickers
+        .new(opts, {
+          prompt_title = prompt_title,
+          finder = finders.new_table {
+            results = items,
+            entry_maker = entry_maker,
+          },
+          previewer = previewer,
+          sorter = telescope_conf.generic_sorter(opts),
+          attach_mappings = function(prompt_bufnr)
+            actions.select_default:replace(function()
+              local selection = action_state.get_selected_entry()
+              actions.close(prompt_bufnr)
 
-            _open_references_window(selection.value)
-          end)
+              _open_references_window(selection.value)
+            end)
 
-          return true
-        end,
-      }):find()
+            return true
+          end,
+        })
+        :find()
     end
   else
     error "goto_preview_references requires Telescope.nvim"
@@ -354,10 +391,7 @@ end
 M.get_handler = function(lsp_call, opts)
   -- Only really need to check one of the handlers
   for k, v in pairs(vim.lsp.handlers) do
-    if string.find(k, "textDocument")
-      and type(v) == "function"
-      and debug.getinfo(v).isvararg == false
-    then
+    if string.find(k, "textDocument") and type(v) == "function" and debug.getinfo(v).isvararg == false then
       if debug.getinfo(v).nparams == 4 then
         logger.debug "calling new handler"
         return handler(lsp_call, opts)

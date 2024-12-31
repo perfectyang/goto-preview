@@ -146,7 +146,31 @@ M.close_all_win = function(options)
   end
 end
 
+local function get_active_window()
+  -- local current_tabpage = vim.api.nvim_get_current_tabpage()
+  local wins = vim.api.nvim_tabpage_list_wins(0)
+  local active_win = vim.api.nvim_tabpage_get_win(0)
+
+  print("All windows in current tabpage:", vim.inspect(wins))
+  print("Active window ID:", active_win)
+
+  -- 验证活动窗口是否在窗口列表中
+  for _, win in ipairs(wins) do
+    if win == active_win then
+      print "Active window found in the list"
+      return
+    end
+  end
+  print "Active window not found in the list (this should never happen)"
+end
+
+M.go_next_win = function()
+  local win = get_active_window()
+  lib.go_next_win(win)
+end
+
 M.remove_win = lib.remove_win
+M.go_next_win = lib.go_next_win
 M.buffer_entered = lib.buffer_entered
 M.buffer_left = lib.buffer_left
 M.dismiss_preview = lib.dismiss_preview
@@ -169,11 +193,11 @@ M.apply_default_mappings = function()
     vim.keymap.set("n", "gpi", require("goto-preview").goto_preview_implementation, {
       desc = "Preview implementation",
     })
-    vim.keymap.set("n", "gpD", require("goto-preview").goto_preview_declaration, {
+    vim.keymap.set("n", "tgd", require("goto-preview").goto_preview_declaration, {
       desc = "Preview declaration",
     })
-    vim.keymap.set("n", "gpr", require("goto-preview").goto_preview_references, { desc = "Preview references" })
-    vim.keymap.set("n", "gP", require("goto-preview").close_all_win, { desc = "Close preview windows" })
+    vim.keymap.set("n", "<leader>tn", require("goto-preview").goto_preview_references, { desc = "Preview references" })
+    vim.keymap.set("n", "llt", require("goto-preview").close_all_win, { desc = "Close preview windows" })
   end
 end
 
