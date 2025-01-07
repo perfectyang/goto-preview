@@ -1,19 +1,25 @@
 ## ⭐ Goto Preview
+
 A small Neovim plugin for previewing native LSP's goto definition, type definition, implementation, declaration and references calls in floating windows.
 
 ### 🚀 Showcase
+
 <img src="https://github.com/rmagatti/readme-assets/blob/main/goto-preview-zoomed.gif" />
 
 #### 🔗 References
+
 <img src="https://github.com/rmagatti/readme-assets/blob/main/goto-preview-references.gif" />
 
 ### ⚠️ IMPORTANT NOTE
+
 Make sure you use Neovim `0.5.1` or GUIs like [Goneovim](https://github.com/akiyosi/goneovim) and [Uivonim](https://github.com/smolck/uivonim).
 
 There is a bug in [Neovim `0.5`](https://github.com/neovim/neovim/issues/14735) that prevents the correct positioning of more than one preview window.
 
 ### 📦 Installation
+
 [Lazy.nvim](https://github.com/folke/lazy.nvim)
+
 ```lua
 {
   "rmagatti/goto-preview",
@@ -23,6 +29,7 @@ There is a bug in [Neovim `0.5`](https://github.com/neovim/neovim/issues/14735) 
 ```
 
 [Packer.nvim](https://github.com/wbthomason/packer.nvim)
+
 ```lua
 use {
   'rmagatti/goto-preview',
@@ -31,7 +38,9 @@ use {
   end
 }
 ```
+
 [vim-plug](https://github.com/junegunn/vim-plug)
+
 ```vim
 Plug 'rmagatti/goto-preview'
 
@@ -42,6 +51,7 @@ Plug 'rmagatti/goto-preview'
 ### ⚙️ Configuration
 
 **Default**
+
 ```lua
 require('goto-preview').setup {
   width = 120, -- Width of the floating window
@@ -75,19 +85,23 @@ The `post_close_hook` function gets called right before closing the preview wind
 custom key bindings when you leave the preview window.
 
 ### ⌨️ Mappings
+
 There are no mappings by default, you can set `default_mappings = true` in the config to make use of the mappings I use or define your own.
 
 **Default**
+
 ```viml
 nnoremap gpd <cmd>lua require('goto-preview').goto_preview_definition()<CR>
 nnoremap gpt <cmd>lua require('goto-preview').goto_preview_type_definition()<CR>
 nnoremap gpi <cmd>lua require('goto-preview').goto_preview_implementation()<CR>
 nnoremap gpD <cmd>lua require('goto-preview').goto_preview_declaration()<CR>
-nnoremap gP <cmd>lua require('goto-preview').close_all_win()<CR>
 nnoremap gpr <cmd>lua require('goto-preview').goto_preview_references()<CR>
+nnoremap gP <cmd>lua require('goto-preview').close_all_win()<CR>
+nnoremap gn <cmd>lua require('goto-preview').go_next_win()<CR>
 ```
 
 **Custom example**
+
 ```lua
 vim.keymap.set("n", "gp", "<cmd>lua require('goto-preview').goto_preview_definition()<CR>", {noremap=true})
 ```
@@ -97,23 +111,26 @@ vim.keymap.set("n", "gp", "<cmd>lua require('goto-preview').goto_preview_definit
 The `close_all_win` function takes an optional table as an argument.
 
 Example usage:
+
 ```lua
 require("goto-preview").close_all_win { skip_curr_window = true }
 ```
 
 ### Window manipulation
+
 One can manipulate floating windows with the regular Vim window moving commands. See `:h window-moving`.
 Example:
 <img src="https://user-images.githubusercontent.com/2881382/121652080-88716e00-ca58-11eb-811c-677ec61d8e25.gif" />
 
 ### Supported languages
+
 Goto Preview should work with LSP responses for most languages now! If something doesn't work as expected, drop an issue and I'll be happy to check it out!
 
 **Note:** different language servers have potentially different shapes for the result of the `textDocument/definition`, `textDocument/typeDefinition`, `textDocument/implementation` and `textDocument/declaration` calls.
 Until more are added one can pass in custom responses through the `lsp_configs` config value. Just follow the same pattern returning two values, a `target (string)` and a `cursor_position ({line_num, col_num})`. The `data` parameter is the `[1]` of the LSP's `result` of the definition/implementation calls and is what gets passed into the custom `get_config` function.
 
-
 ### Tested with
+
 ```
 NVIM v0.5.0-dev+7d4f890aa
 Build type: Release
