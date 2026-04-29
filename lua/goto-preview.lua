@@ -61,7 +61,9 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_definition = function(opts)
-  local params = vim.lsp.util.make_position_params()
+  local win = vim.api.nvim_get_current_win()
+  local position_encoding = vim.api.nvim_win_get_option(win, "encoding")
+  local params = vim.lsp.util.make_position_params({ win }, { position_encoding })
   local lsp_call = "textDocument/definition"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
