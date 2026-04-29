@@ -54,6 +54,17 @@ end
 local function print_lsp_error(lsp_call)
   print("goto-preview: Error calling LSP" + lsp_call + ". The current language lsp might not support it.")
 end
+M.getEncoding = function()
+  -- 获取当前缓冲区（编号0）的第一个LSP客户端
+  local client = vim.lsp.get_clients({ bufnr = 0 })[1]
+  if not client then
+    -- 如果提示 "client is nil"，说明LSP还未成功连接，后续操作理应中止
+    return
+  end
+  -- 获取该客户端支持的位置编码，如 "utf-16"
+  local encoding = client.offset_encoding
+  return encoding
+end
 
 --- Preview definition.
 --- @param opts table: Custom config
@@ -61,17 +72,7 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_definition = function(opts)
-  -- 获取当前缓冲区（编号0）的第一个LSP客户端
-  local client = vim.lsp.get_clients({ bufnr = 0 })[1]
-  if not client then
-    -- 如果提示 "client is nil"，说明LSP还未成功连接，后续操作理应中止
-    return
-  end
-
-  -- 获取该客户端支持的位置编码，如 "utf-16"
-  local encoding = client.offset_encoding
-  local position_encoding = "utf-8"
-  local params = vim.lsp.util.make_position_params(0, encoding)
+  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
   local lsp_call = "textDocument/definition"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
@@ -85,7 +86,7 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_type_definition = function(opts)
-  local params = vim.lsp.util.make_position_params()
+  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
   local lsp_call = "textDocument/typeDefinition"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
@@ -99,7 +100,7 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_implementation = function(opts)
-  local params = vim.lsp.util.make_position_params()
+  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
   local lsp_call = "textDocument/implementation"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
@@ -113,7 +114,7 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_declaration = function(opts)
-  local params = vim.lsp.util.make_position_params()
+  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
   local lsp_call = "textDocument/declaration"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
@@ -122,7 +123,7 @@ M.lsp_request_declaration = function(opts)
 end
 
 M.lsp_request_references = function(opts)
-  local params = vim.lsp.util.make_position_params()
+  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
 
   lib.logger.debug("params pre manipulation", vim.inspect(params))
   if not params.context then
