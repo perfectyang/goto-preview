@@ -61,9 +61,17 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_definition = function(opts)
-  local win = 0
+  -- 获取当前缓冲区（编号0）的第一个LSP客户端
+  local client = vim.lsp.get_clients({ bufnr = 0 })[1]
+  if not client then
+    -- 如果提示 "client is nil"，说明LSP还未成功连接，后续操作理应中止
+    return
+  end
+
+  -- 获取该客户端支持的位置编码，如 "utf-16"
+  local encoding = client.offset_encoding
   local position_encoding = "utf-8"
-  local params = vim.lsp.util.make_position_params({ win }, { position_encoding })
+  local params = vim.lsp.util.make_position_params(0, encoding)
   local lsp_call = "textDocument/definition"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
