@@ -72,7 +72,7 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_definition = function(opts)
-  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
+  local params = vim.lsp.util.make_position_params()
   local lsp_call = "textDocument/definition"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
@@ -86,7 +86,7 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_type_definition = function(opts)
-  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
+  local params = vim.lsp.util.make_position_params()
   local lsp_call = "textDocument/typeDefinition"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
@@ -100,7 +100,7 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_implementation = function(opts)
-  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
+  local params = vim.lsp.util.make_position_params()
   local lsp_call = "textDocument/implementation"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
@@ -114,7 +114,7 @@ end
 ---        • dismiss_on_move boolean: Dismiss the floating window when moving the cursor.
 --- @see require("goto-preview").setup()
 M.lsp_request_declaration = function(opts)
-  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
+  local params = vim.lsp.util.make_position_params()
   local lsp_call = "textDocument/declaration"
   local success, _ = pcall(vim.lsp.buf_request, 0, lsp_call, params, lib.get_handler(lsp_call, opts))
   if not success then
@@ -123,7 +123,7 @@ M.lsp_request_declaration = function(opts)
 end
 
 M.lsp_request_references = function(opts)
-  local params = vim.lsp.util.make_position_params(0, M.getEncoding())
+  local params = vim.lsp.util.make_position_params()
 
   lib.logger.debug("params pre manipulation", vim.inspect(params))
   if not params.context then
