@@ -207,12 +207,30 @@ end
 
 M.open_floating_win = function(target, position, opts)
   local buffer = type(target) == "string" and vim.uri_to_bufnr(target) or target
-  local bufpos = { vim.fn.line "." - 1, vim.fn.col "." } -- FOR relative='win'
-  -- local zindex = M.conf.zindex + (vim.tbl_isempty(M.windows) and 0 or #M.windows)
+  local bufpos = { vim.fn.line "." - 1, vim.fn.col "." }
   M.addIndex()
   local zindex = M.zindex
 
   opts = opts or {}
+
+  local close_existing = function()
+    if opts.stack_floating_preview_windows == false then
+      return true
+    end
+    if M.conf.stack_floating_preview_windows == false then
+      return true
+    end
+    return false
+  end
+
+  if close_existing() and #M.windows > 0 then
+    for _, win in ipairs(M.windows) do
+      if vim.api.nvim_win_is_valid(win) then
+        pcall(vim.api.nvim_win_close, win, M.conf.force_close)
+      end
+    end
+    M.windows = {}
+  end
 
   local preview_window = create_preview_win(buffer, bufpos, zindex, opts)
 
@@ -368,7 +386,7 @@ end
 
 local legacy_handler = function(lsp_call, opts)
   return function(_, _, result)
-    if lsp_call ~= nil and lsp_call == "textDocument/references" then
+    if lsp_call == "textDocument/references" then
       logger.debug("raw result", vim.inspect(result))
       handle_references(result)
     else
@@ -379,7 +397,7 @@ end
 
 local handler = function(lsp_call, opts)
   return function(_, result, _, _)
-    if lsp_call ~= nil and lsp_call == "textDocument/references" then
+    if lsp_call == "textDocument/references" then
       logger.debug("raw result", vim.inspect(result))
       handle_references(result)
     else
@@ -389,17 +407,14 @@ local handler = function(lsp_call, opts)
 end
 
 M.get_handler = function(lsp_call, opts)
-  -- Only really need to check one of the handlers
-  for k, v in pairs(vim.lsp.handlers) do
-    if string.find(k, "textDocument") and type(v) == "function" and debug.getinfo(v).isvararg == false then
-      if debug.getinfo(v).nparams == 4 then
-        logger.debug "calling new handler"
-        return handler(lsp_call, opts)
-      else
-        logger.debug "calling legacy handler"
-        return legacy_handler(lsp_call, opts)
-      end
-    end
+  local handler_key = lsp_call:gsub("/", "_")
+  local lsp_handler = vim.lsp.handlers[handler_key]
+  if lsp_handler and debug.getinfo(lsp_handler).nparams == 4 then
+    logger.debug("using new handler for", lsp_call)
+    return handler(lsp_call, opts)
+  else
+    logger.debug("using legacy handler for", lsp_call)
+    return legacy_handler(lsp_call, opts)
   end
 end
 
